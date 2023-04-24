@@ -11,6 +11,14 @@ library(here)
 library(tidyverse)
 ```
 
+
+### Overview
+Here is a pic of our model thoughtS!!
+[insert model pic here]
+
+
+
+
 ### Read in data
 ```{r}
 clim_df <- read_table("clim.txt") %>% 
@@ -19,9 +27,10 @@ clim_df <- read_table("clim.txt") %>%
 
 ```
 
-### Climate data 
 
-First we'll create a data subset with the total precipitation and absolute minimum and maximum temperatures for each month. Then, we'll form two subsets for use in the almond yield function: one with minimum February temperature and another with average January precipitation.
+### Wrangle climate data 
+
+Here we create a data subset with the total precipitation and absolute minimum and maximum temperatures for each month. Then, we'll form two subsets for use in the almond yield function: one with minimum February temperature and another with average January precipitation.
 ```{r}
 ### Find the absolute tmin and tmax
 ### as well as average precip for each month in dataset
@@ -32,26 +41,13 @@ clim_months <- clim_df %>%
             precip_sum = sum(precip))
 
 
-### Min temps from Feb
-tmin_feb <- clim_months %>% 
-  filter(month == 2) %>% 
-  select(year, tmin_min)
+### Filter for min temps from Feb
+tmin_feb <- (clim_months %>% filter(month ==2))$tmin_min 
 
   
-### Avg precip from Jan
-jan_precip <- clim_months %>% 
-  filter(month == 1) %>% 
-  select(year, precip_sum)
-
-
-
-### Another way to do it if we only want the values...
-test_temp <- (clim_months %>% filter(month ==2))$tmin_min
-test_precip <- (clim_months %>% filter(month ==1))$precip_sum
-
+### Filter for summed precip in Jan
+jan_precip <- (clim_months %>% filter(month ==1))$precip_sum
 ```
-
-
 
 
 
@@ -60,22 +56,13 @@ test_precip <- (clim_months %>% filter(month ==1))$precip_sum
 ### Read in function
 source("compute_almond_yield.R")
 
-### Assign results to df
-yield_anomalies <- almond_yield(test_temp, test_precip) %>% 
-  as.data.frame()
+### Run function with climate data
+yields <- almond_yield(tmin_feb, jan_precip)
 
-### add in year data
-colnames(yield_anomalies) <- c("yield_anomaly_ton_acre")
-mutate(yield_anomalies, year = tmin_feb$year)
-
-
-### Do our values match theirs?
-max <- max(yield_anomalies)
-min <- min(yield_anomalies)
-mean <- mean(yield_anomalies)
+yields
 ```
 
-
+Given the climate data from 1989-2010, we see that the maximum yield anomaly for almond crops is `r yields$max_yield`, the minimum yield anomaly is `r yields$min_yield`, and the average yield anomaly is `r yields$mean_yield`.
 
 
 
