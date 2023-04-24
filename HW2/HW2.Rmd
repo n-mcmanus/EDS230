@@ -13,10 +13,10 @@ library(tidyverse)
 
 
 ### Overview
-Here is a pic of our model thoughtS!!
-[insert model pic here]
 
+First, we created a diagram to represent our model for almond yield anomalies in response to climate. This included translating our inputs into outputs and determining which parameters will influence the relationship between the inputs and outputs. 
 
+![Almond Yied Anomoly Conceptual Model](diagram/EDS230_HW2.jpg)
 
 
 ### Read in data
