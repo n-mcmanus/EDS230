@@ -19,14 +19,29 @@ clim_df <- read_table("clim.txt") %>%
 
 ```
 
-### Climate data test fxn
+### Climate data 
+
+First we'll create a data subset with the average precipitation and absolute minimum and maximum temperatures for each month. Then, we'll form two subsets for use in the almond yield function: one with minimum February temperature and another with average January precipitation.
 ```{r}
-### Find the avg tmin, tmax, and precip for each month in dataset
+### Find the absolute tmin and tmax
+### as well as average precip for each month in dataset
 clim_avg <- clim_df %>% 
   group_by(month, year) %>% 
-  summarize(tmax_avg = mean(tmax_c),
-            tmin_avg = mean(tmin_c),
+  summarize(tmax_abs = max(tmax_c),
+            tmin_abs = min(tmin_c),
             precip_avg = mean(precip))
+
+
+### Min temps from Feb
+feb_tmin <- clim_avg %>% 
+  filter(month == 2) %>% 
+  select(year, tmin_abs)
+  
+
+### Avg precip from Jan
+jan_precip <- clim_avg %>% 
+  filter(month == 1) %>% 
+  select(year, precip_avg)
 ```
 
 
