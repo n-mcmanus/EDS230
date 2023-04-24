@@ -21,41 +21,58 @@ clim_df <- read_table("clim.txt") %>%
 
 ### Climate data 
 
-First we'll create a data subset with the average precipitation and absolute minimum and maximum temperatures for each month. Then, we'll form two subsets for use in the almond yield function: one with minimum February temperature and another with average January precipitation.
+First we'll create a data subset with the total precipitation and absolute minimum and maximum temperatures for each month. Then, we'll form two subsets for use in the almond yield function: one with minimum February temperature and another with average January precipitation.
 ```{r}
 ### Find the absolute tmin and tmax
 ### as well as average precip for each month in dataset
-clim_avg <- clim_df %>% 
+clim_months <- clim_df %>% 
   group_by(month, year) %>% 
-  summarize(tmax_abs = max(tmax_c),
-            tmin_abs = min(tmin_c),
-            precip_avg = mean(precip))
+  summarize(tmax_max = max(tmax_c),
+            tmin_min = min(tmin_c),
+            precip_sum = sum(precip))
 
 
 ### Min temps from Feb
-feb_tmin <- clim_avg %>% 
+tmin_feb <- clim_months %>% 
   filter(month == 2) %>% 
-  select(year, tmin_abs)
-  
+  select(year, tmin_min)
 
+  
 ### Avg precip from Jan
-jan_precip <- clim_avg %>% 
+jan_precip <- clim_months %>% 
   filter(month == 1) %>% 
-  select(year, precip_avg)
+  select(year, precip_sum)
+
+
+
+### Another way to do it if we only want the values...
+test_temp <- (clim_months %>% filter(month ==2))$tmin_min
+test_precip <- (clim_months %>% filter(month ==1))$precip_sum
+
 ```
 
 
 
 
 
-### Almond test fxn
+### Run function to get yield anomalies
 ```{r}
+### Read in function
+source("compute_almond_yield.R")
 
-test <- function(min_temp, precip) {
-  yield = -0.015*(min_temp) - 0.0046*(min_temp^2) - 0.07*(precip) + 0.0043*(precip^2) + 0.28
-  
-  return(yield)
-}
+### Assign results to df
+yield_anomalies <- almond_yield(test_temp, test_precip) %>% 
+  as.data.frame()
+
+### add in year data
+colnames(yield_anomalies) <- c("yield_anomaly_ton_acre")
+mutate(yield_anomalies, year = tmin_feb$year)
+
+
+### Do our values match theirs?
+max <- max(yield_anomalies)
+min <- min(yield_anomalies)
+mean <- mean(yield_anomalies)
 ```
 
 
