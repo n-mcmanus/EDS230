@@ -13,5 +13,12 @@
 
 almond_yield = function(min_temp, precip) {
   yield = -0.015*(min_temp) - 0.0046*(min_temp^2) - 0.07*(precip) + 0.0043*(precip^2) + 0.28
-  return(yield)
+  
+  max_yield = max(yield)
+  min_yield = min(yield)
+  mean_yield = mean(yield)
+    
+  x <- list(max_yield, min_yield, mean_yield)
+  
+  return(x)
 }
