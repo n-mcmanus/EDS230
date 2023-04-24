@@ -54,7 +54,7 @@ jan_precip <- (clim_months %>% filter(month ==1))$precip_sum
 ### Run function to get yield anomalies
 ```{r}
 ### Read in function
-source("compute_almond_yield.R")
+source("R/compute_almond_yield.R")
 
 ### Run function with climate data
 yields <- almond_yield(tmin_feb, jan_precip)

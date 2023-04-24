@@ -5,7 +5,7 @@
 #' 
 #' @param min_temp minimum temperature for February (degrees Celsius)
 #' @param precip precipitation during the month of January (mm)
-#' @return yield anomaly  (tons/acre)
+#' @return list of maximum, minimum, and average yield anomalies  (tons/acre)
 
 
 almond_yield = function(min_temp, precip) {
