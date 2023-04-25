@@ -5,10 +5,14 @@
 #' 
 #' @param min_temp minimum temperature for February (degrees Celsius)
 #' @param precip precipitation during the month of January (mm)
+#' @param tcoeff1 min Feb temp coefficient 1 (default = -0.015)
+#' @param tcoeff2 min Feb temp coefficient 2 (default = -0.0046)
+#' @param pcoeff1 summed Jan precip coefficient 1 (default = -0.07)
+#' @param pcoeff2 summed Jan precip coefficient 2 (default = 0.0043)
 #' @return list of maximum, minimum, and average yield anomalies  (tons/acre)
 
 
-almond_yield = function(min_temp, precip) {
+almond_yield = function(min_temp, precip, tcoeff1 = -0.015, tcoeff2 = -0.0046, pcoeff1 = -0.07, pcoeff2 = 0.0043) {
   
   ### Error checking:
   ##### STOP fxn if negative precip values given
@@ -20,7 +24,7 @@ almond_yield = function(min_temp, precip) {
   
   
   ### Calculate the yield anomalies based on provided formula
-  yield = (-0.015*(min_temp) - 0.0046*(min_temp^2) - 0.07*(precip) + 0.0043*(precip^2) + 0.28)
+  yield = ((tcoeff1)*(min_temp) + (tcoeff2)*(min_temp^2) + (pcoeff1)*(precip) + (pcoeff2)*(precip^2) + 0.28)
   
   
   ### Find max, min, mean yield anomalies
