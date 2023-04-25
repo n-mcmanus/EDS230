@@ -9,6 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(here)
 library(tidyverse)
+library(purrr)
 ```
 
 
@@ -69,6 +70,23 @@ Given the climate data from 1989-2010, we see that the maximum yield anomaly for
 
 
 
+### Informal Sensitivity Analysis
+```{r}
+### sample of tcoeff1 values
+tcoeff1_samp <- rnorm(mean = -0.015, sd = 0.01, n = 20)
+
+### use map from purrr
+sens_test <- tcoeff1_samp %>% 
+  map(~almond_yield(tmin_feb, jan_precip, tcoeff1 = .x))
+
+head(sens_test)
+
+
+### Try to extract just max yields df with purrr::map_df
+
+sens_test_df <- map_df(sens_test, `[`, "max_yield")
+sens_test_df
+```
 
 
 
