@@ -1,11 +1,18 @@
 ---
 title: "HW3: Almond Profit and Informal Sensitivity Analysis"
-author: "Katheryn Moya"
+author: "Katheryn Moya & Nick McManus"
 date: "4/27/2023"
-output: html_document
+output: 
+ html_document: 
+    toc: yes
+    toc_float: yes
+    theme: cerulean
+    code_folding: hide
+    smooth_scroll: yes
+    collapsed: yes
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=T}
 knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
@@ -14,7 +21,45 @@ library(purrr)
 library(ggpubr)
 ```
 
-##  Sensitivity Analysis with *tcoeff1*
+
+## Read in and wrangle climate data
+
+First we'll read in our `clim.txt` data file, which provides daily precipitation as well as minimum and maximum temperatures. Next, we'll create a data subset with the total precipitation and absolute minimum and maximum temperatures for each month. Then, we'll form two subsets for use in the almond yield function: one with minimum February temperatures and another with the total January precipitation.
+```{r}
+### Read in data
+clim_df <- read_table("clim.txt") %>% 
+  ## remove quotes in names
+  janitor::clean_names()
+
+
+### Find the absolute tmin and tmax and summed precip
+clim_months <- clim_df %>% 
+  group_by(month, year) %>% 
+  summarize(tmax_max = max(tmax_c),
+            tmin_min = min(tmin_c),
+            precip_sum = sum(precip))
+
+
+### Filter for Feb Tmin
+tmin_feb <- (clim_months %>% filter(month ==2))$tmin_min 
+
+### Filter for Jan precip
+jan_precip <- (clim_months %>% filter(month ==1))$precip_sum
+```
+
+
+
+# Sensitivity Analysis
+
+We'll perform the sensitivity analysis using outputs from the almond yield function. This function outputs the yield anomaly and profit for each year within the time series. 
+
+```{r}
+### Read in function
+source(here("R/almond_yield_profit.R"))
+```
+
+
+##  Analysis with *tcoeff1*
 
 * Assuming +- X% of uncertainty in *tcoeff1* parameter
 
