@@ -61,16 +61,20 @@ source(here("R/almond_yield_profit.R"))
 
 ##  Analysis with *tcoeff1*
 
-* Assuming +- X% of uncertainty in *tcoeff1* parameter
-
 * Default value from the function is -0.015
 
-* How many samples?
+* Assuming $\pm$ 30% of uncertainty in *tcoeff1* parameter
 
 * Assuming a uniform distribution since we do not know anything about variation
 
 ```{r tcoeff1}
+nsamples = 200
+dev = 0.3
+tcoeff1_base = -0.015
 
+tcoeff1_sample <- runif(min = tcoeff1_base + tcoeff1_base*dev,
+                        max = tcoeff1_base - tcoeff1_base*dev,
+                        n = nsamples)
 
 ```
 
