@@ -64,7 +64,7 @@ source(here("R/almond_yield_profit.R"))
 For this analysis, we're testing for the uncertainties surrounding the *tcoeff1* parameter -- which affects almond yield anomaly -- as well as the price for almonds. The informal sensitivity analysis for the *tcoeff1* parameter includes the following assumptions:
 
 * Default value of the parameter is -0.015
-* Uncertainty of  $\pm$30% for parameter
+* Uncertainty of  $\pm$20% for parameter
 * Uniform distribution since we do not know anything about variation
 
 For the price per ton per acre of almonds, the following assumptions were made to randomly generate samples:
@@ -76,7 +76,7 @@ For the price per ton per acre of almonds, the following assumptions were made t
 nsamples = 300
 
 ### tcoeff1 sample
-dev = 0.3
+dev = 0.2
 tcoeff1_base = -0.015
 
 tcoeff1_sample <- runif(min = tcoeff1_base + tcoeff1_base*dev,
@@ -86,5 +86,18 @@ tcoeff1_sample <- runif(min = tcoeff1_base + tcoeff1_base*dev,
 ### price samples
 price_sample <- rnorm(mean = 3520, sd = 200, n = nsamples)
 
+
+### bind samples together in one df
+parms <- cbind.data.frame(tcoeff1_sample, price_sample)
 ```
 
+
+## Run function with `purrr::pmap`
+```{r}
+### run with pmap
+```
+
+
+
+## Visualize results
+Here we will make the "meaningful" figures
