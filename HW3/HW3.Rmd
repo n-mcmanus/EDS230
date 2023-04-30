@@ -59,22 +59,32 @@ source(here("R/almond_yield_profit.R"))
 ```
 
 
-##  Analysis with *tcoeff1*
+##  Generate samples
 
-* Default value from the function is -0.015
+For this analysis, we're testing for the uncertainties surrounding the *tcoeff1* parameter -- which affects almond yield anomaly -- as well as the price for almonds. The informal sensitivity analysis for the *tcoeff1* parameter includes the following assumptions:
 
-* Assuming $\pm$ 30% of uncertainty in *tcoeff1* parameter
+* Default value of the parameter is -0.015
+* Uncertainty of  $\pm$30% for parameter
+* Uniform distribution since we do not know anything about variation
 
-* Assuming a uniform distribution since we do not know anything about variation
+For the price per ton per acre of almonds, the following assumptions were made to randomly generate samples:
+* Default (mean) price is $3520/ton/acre
+* Due to market changes, one standard deviation in price is $200/ton/acre
+* Changes in price follow normal distribution
 
-```{r tcoeff1}
-nsamples = 200
+```{r}
+nsamples = 300
+
+### tcoeff1 sample
 dev = 0.3
 tcoeff1_base = -0.015
 
 tcoeff1_sample <- runif(min = tcoeff1_base + tcoeff1_base*dev,
                         max = tcoeff1_base - tcoeff1_base*dev,
                         n = nsamples)
+
+### price samples
+price_sample <- rnorm(mean = 3520, sd = 200, n = nsamples)
 
 ```
 
