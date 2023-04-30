@@ -1,0 +1,31 @@
+---
+title: "HW3: Almond Profit and Informal Sensitivity Analysis"
+author: "Katheryn Moya"
+date: "4/27/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(here)
+library(purrr)
+library(ggpubr)
+```
+
+##  Sensitivity Analysis with *tcoeff1*
+
+* Assuming +- X% of uncertainty in *tcoeff1* parameter
+
+* Default value from the function is -0.015
+
+* How many samples?
+
+* Assuming a uniform distribution since we do not know anything about variation
+
+```{r tcoeff1}
+
+
+```
+
