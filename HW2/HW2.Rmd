@@ -2,11 +2,18 @@
 title: "HW2: Modeling Almond Yield Anomalies"
 author: "Nick McManus and Katheryn Moya"
 date: "2023-04-20"
-output: html_document
+output: 
+ html_document: 
+    toc: yes
+    toc_float: yes
+    theme: cerulean
+    code_folding: hide
+    smooth_scroll: yes
+    collapsed: yes
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r setup, include=TRUE, message = F, warning = F}
+knitr::opts_chunk$set(echo = TRUE, message = F, warning = F)
 library(here)
 library(tidyverse)
 library(purrr)
@@ -55,12 +62,11 @@ jan_precip <- (clim_months %>% filter(month ==1))$precip_sum
 Finally, we'll source our function to find the yield anomalies for the given timeseries of climate data. 
 ```{r}
 ### Read in function
-source("R/compute_almond_yield.R")
+source(here("R/compute_almond_yield.R"))
 
 ### Run function with climate data
 yields <- almond_yield(tmin_feb, jan_precip)
 
-yields
 ```
 
 Given the climate data from 1989-2010, we see that the maximum yield anomaly for almond crops is `r yields$max_yield`, the minimum yield anomaly is `r yields$min_yield`, and the average yield anomaly is `r yields$mean_yield`.
@@ -79,7 +85,7 @@ tcoeff1_samp <- rnorm(mean = -0.015, sd = 0.01, n = 20)
 sens_test <- tcoeff1_samp %>% 
   map(~almond_yield(tmin_feb, jan_precip, tcoeff1 = .x))
 
-head(sens_test)
+# head(sens_test)
 
 
 ### Try to extract just max yields df with purrr::map_df
