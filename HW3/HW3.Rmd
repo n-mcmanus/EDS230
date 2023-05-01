@@ -105,14 +105,15 @@ Using `pmap()`, we can easily run our almond yield function across our entire sa
 ### run with pmap
 results <- params %>% pmap(almond_yield_profit, 
                            tmin = tmin_feb$tmin_min,
-                           precip = precip_jan$precip_sum)
+                           precip = precip_jan$precip_sum,
+                           year = tmin_feb$year)
 
 ### View head of results and make sure length = 300
 # results[[1]]
 # length(results)
 
 ### Extract results from list into df
-yield_profit <- map_df(results, `[`, c("mean_yield", "mean_profit"))
+yield_profit <- map_df(results, `[`, c("year", "yield_anomaly", "profit")) 
 
 ### Bind results to the input parameter values
 yield_profit <- cbind.data.frame(yield_profit, params)
@@ -123,3 +124,9 @@ yield_profit <- cbind.data.frame(yield_profit, params)
 
 ## Visualize results
 Here we will make the "meaningful" figures
+```{r}
+ggplot(yield_profit, aes(x = as.factor(year), y = profit, group = year)) +
+  geom_boxplot() + 
+  labs(y="Profit", x="Year")
+```
+

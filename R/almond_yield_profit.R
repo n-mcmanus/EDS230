@@ -14,7 +14,7 @@
 #' @param base_profit baseline profit for average almond yield (default = 3168 USD/ton/acre). Assumption that average yield of 0.9 ton/acre
 #' @return almond yield anomaly (tons/acre) and profit per year (USD/tons/acre)
 
-almond_yield_profit = function(tmin, precip, tcoeff1 = -0.015, tcoeff2 = -0.0046, pcoeff1 = -0.07, pcoeff2 = 0.0043, base_profit = 3168, price_ton = 3520) {
+almond_yield_profit = function(tmin, precip, year, tcoeff1 = -0.015, tcoeff2 = -0.0046, pcoeff1 = -0.07, pcoeff2 = 0.0043, base_profit = 3168, price_ton = 3520) {
 
 
       ### First calculate the almond yield anomaly
@@ -51,9 +51,10 @@ mean_yield = mean(yield_anomaly)
 profit = almond_profit(yield_anomaly, base_profit, price_ton)
 mean_profit = mean(profit)
   
+year = year
 
 ## Return list of of yield and profit for each year    
-yield_stats <- as.list(data.frame(mean_yield, mean_profit))
+yield_stats <- as.list(data.frame(year, yield_anomaly, profit))
     
 return(yield_stats)
 
