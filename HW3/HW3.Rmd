@@ -12,8 +12,8 @@ output:
     collapsed: yes
 ---
 
-```{r setup, include=T}
-knitr::opts_chunk$set(echo = TRUE)
+```{r setup, include=T, warning=F, message=F}
+knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
 
 library(tidyverse)
 library(here)
@@ -41,10 +41,16 @@ clim_months <- clim_df %>%
 
 
 ### Filter for Feb Tmin
-tmin_feb <- (clim_months %>% filter(month ==2))$tmin_min 
+tmin_feb <- clim_months %>% 
+  filter(month ==2) %>% 
+  ungroup() %>% 
+  select(year, tmin_min)
 
 ### Filter for Jan precip
-jan_precip <- (clim_months %>% filter(month ==1))$precip_sum
+precip_jan <- clim_months %>% 
+  filter(month == 1) %>% 
+  ungroup() %>% 
+  select(year, precip_sum)
 ```
 
 
@@ -61,13 +67,13 @@ source(here("R/almond_yield_profit.R"))
 
 ##  Generate samples
 
-For this analysis, we're testing for the uncertainties surrounding the *tcoeff1* parameter -- which affects almond yield anomaly -- as well as the price for almonds. The informal sensitivity analysis for the *tcoeff1* parameter includes the following assumptions:
+For this analysis, we're testing for the uncertainties surrounding the `tcoeff1` parameter -- which affects almond yield anomaly -- as well as the price per ton/acre (`price_ton`) for almonds. The informal sensitivity analysis for the `tcoeff1` parameter includes the following assumptions:
 
 * Default value of the parameter is -0.015
 * Uncertainty of  $\pm$20% for parameter
 * Uniform distribution since we do not know anything about variation
 
-For the price per ton per acre of almonds, the following assumptions were made to randomly generate samples:
+For the price per ton/acre of almonds, the following assumptions were made to randomly generate samples:
 * Default (mean) price is $3520/ton/acre
 * Due to market changes, one standard deviation in price is $200/ton/acre
 * Changes in price follow normal distribution
@@ -79,22 +85,38 @@ nsamples = 300
 dev = 0.2
 tcoeff1_base = -0.015
 
-tcoeff1_sample <- runif(min = tcoeff1_base + tcoeff1_base*dev,
+tcoeff1 <- runif(min = tcoeff1_base + tcoeff1_base*dev,
                         max = tcoeff1_base - tcoeff1_base*dev,
                         n = nsamples)
 
 ### price samples
-price_sample <- rnorm(mean = 3520, sd = 200, n = nsamples)
+price_ton <- rnorm(mean = 3520, sd = 200, n = nsamples)
 
 
 ### bind samples together in one df
-parms <- cbind.data.frame(tcoeff1_sample, price_sample)
+params <- cbind.data.frame(tcoeff1, price_ton)
 ```
 
 
-## Run function with `purrr::pmap`
+## Run function with `purrr::pmap()`
+
+Using `pmap()`, we can easily run our almond yield function across our entire sample of parameter values (300 times!). The resulting df `yield_profit` contains the mean yield and mean profit generated over the entire time series given a specific value for `tcoeff1` and `price_ton`. 
 ```{r}
 ### run with pmap
+results <- params %>% pmap(almond_yield_profit, 
+                           tmin = tmin_feb$tmin_min,
+                           precip = precip_jan$precip_sum)
+
+### View head of results and make sure length = 300
+# results[[1]]
+# length(results)
+
+### Extract results from list into df
+yield_profit <- map_df(results, `[`, c("mean_yield", "mean_profit"))
+
+### Bind results to the input parameter values
+yield_profit <- cbind.data.frame(yield_profit, params)
+
 ```
 
 
