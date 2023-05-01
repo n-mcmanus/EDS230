@@ -18,11 +18,10 @@ knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
 library(tidyverse)
 library(here)
 library(purrr)
-library(ggpubr)
 ```
 
 
-## Read in and wrangle climate data
+# Read in and wrangle climate data
 
 First we'll read in our `clim.txt` data file, which provides daily precipitation as well as minimum and maximum temperatures. Next, we'll create a data subset with the total precipitation and absolute minimum and maximum temperatures for each month. Then, we'll form two subsets for use in the almond yield function: one with minimum February temperatures and another with the total January precipitation.
 ```{r}
@@ -57,7 +56,7 @@ precip_jan <- clim_months %>%
 
 # Sensitivity Analysis
 
-We'll perform the sensitivity analysis using outputs from the almond yield function. This function outputs the yield anomaly and profit for each year within the time series. 
+We'll perform the sensitivity analysis using outputs from the almond yield function. This function outputs the profit based on yield anomaly for each year within the time series. 
 
 ```{r}
 ### Read in function
@@ -67,10 +66,15 @@ source(here("R/almond_yield_profit.R"))
 
 ##  Generate samples
 
-For this analysis, we're testing for the uncertainties surrounding the `tcoeff1` parameter -- which affects almond yield anomaly -- as well as the price per ton/acre (`price_ton`) for almonds. The informal sensitivity analysis for the `tcoeff1` parameter includes the following assumptions:
+For this analysis, we're testing for the uncertainties surrounding the `tcoeff1` and `pcoeff2` parameters -- which affect almond yield -- as well as the price per ton/acre (`price_ton`) for almonds. The informal sensitivity analysis for the `tcoeff1` parameter includes the following assumptions:
 
 * Default value of the parameter is -0.015
-* Uncertainty of  $\pm$20% for parameter
+* Uncertainty of $\pm$20% for parameter value
+* Uniform distribution since we do not know anything about variation
+
+For `pcoeff2`, the following assumptions were used to generate a sample of values:
+* Default value of parameter is 0.0043
+* Uncertainty of $\pm$20% for parameter value
 * Uniform distribution since we do not know anything about variation
 
 For the price per ton/acre of almonds, the following assumptions were made to randomly generate samples:
@@ -79,28 +83,37 @@ For the price per ton/acre of almonds, the following assumptions were made to ra
 * Changes in price follow normal distribution
 
 ```{r}
+## Number of samples
 nsamples = 300
-
-### tcoeff1 sample
+## Percent deviation from baseline
 dev = 0.2
-tcoeff1_base = -0.015
 
+
+### Generate tcoeff1 samples
+tcoeff1_base = -0.015
 tcoeff1 <- runif(min = tcoeff1_base + tcoeff1_base*dev,
                         max = tcoeff1_base - tcoeff1_base*dev,
                         n = nsamples)
 
-### price samples
-price_ton <- rnorm(mean = 3520, sd = 200, n = nsamples)
+### Generate pcoeff2 sample
+pcoeff2 <- 0.0043
+pcoeff2 <- runif(min = pcoeff2 - pcoeff2*dev,
+                 max = pcoeff2 + pcoeff2*dev,
+                 n = nsamples)
+
+### Generate price samples
+price_ton <- rnorm(mean = 3520, sd = 100, n = nsamples)
+
 
 
 ### bind samples together in one df
-params <- cbind.data.frame(tcoeff1, price_ton)
+params <- cbind.data.frame(tcoeff1, pcoeff2, price_ton)
 ```
 
 
 ## Run function with `purrr::pmap()`
 
-Using `pmap()`, we can easily run our almond yield function across our entire sample of parameter values (300 times!). The resulting df `yield_profit` contains the mean yield and mean profit generated over the entire time series given a specific value for `tcoeff1` and `price_ton`. 
+Using `pmap()`, we can easily run our almond yield function across our entire sample of parameter values (300 times!). The resulting df `profit` contains the yearly profit generated for each sample value of `tcoeff1`, `pcoeff2`, and `price_ton`. This results in 300 profit values per year over the 21 year time period.
 ```{r}
 ### run with pmap
 results <- params %>% pmap(almond_yield_profit, 
@@ -113,20 +126,50 @@ results <- params %>% pmap(almond_yield_profit,
 # length(results)
 
 ### Extract results from list into df
-yield_profit <- map_df(results, `[`, c("year", "yield_anomaly", "profit")) 
+profit <- map_df(results, `[`, c("year", "profit")) 
 
-### Bind results to the input parameter values
-yield_profit <- cbind.data.frame(yield_profit, params)
 
+# profit_subset <- profit %>% 
+#   filter(!year %in% c(1995, 1997, 2001, 2005, 2008, 2010))
+
+### Exploratory stuff to see which parameters have biggest effect
+
+# ### Bind results to the input parameter values
+# profit <- cbind.data.frame(profit, params)
+#
+# 
+# p1 = ggplot(yield_profit, aes(x = tcoeff1, y = mean_profit, col=pcoeff2))+
+#   geom_point(cex=2)+
+#   labs(y="Profit (USD/TON/ACRE)", x="tcoeff1")
+# p2 = ggplot(yield_profit, aes(x = tcoeff2, y = mean_profit, col=pcoeff2))+
+#   geom_point(cex=2)+
+#   labs(y="Profit (USD/TON/ACRE)", x="tcoeff2")
+# p3 = ggplot(yield_profit, aes(x = pcoeff1, y = mean_profit, col=tcoeff1))+
+#   geom_point(cex=2)+
+#   labs(y="Profit (USD/TON/ACRE)", x="pcoeff1")
+# p4 = ggplot(yield_profit, aes(x = pcoeff2, y = mean_profit, col=tcoeff1))+
+#   geom_point(cex=2)+
+#   labs(y="Profit (USD/TON/ACRE)", x="pcoeff2")
+# ggarrange(p1,p2,p3, p4)
 ```
 
 
 
 ## Visualize results
-Here we will make the "meaningful" figures
-```{r}
-ggplot(yield_profit, aes(x = as.factor(year), y = profit, group = year)) +
-  geom_boxplot() + 
-  labs(y="Profit", x="Year")
+
+Finally, the profit for each year are visualized to informally view the uncertainty of almond profit based on three parameters.
+```{r fig.width = 10, fig.height = 5}
+ggplot(profit, aes(x = as.factor(year), y = profit, group = year)) +
+  geom_boxplot(fill = 'dodgerblue2', color = 'dodgerblue4', 
+               alpha = 0.6, width = 0.9) + 
+  labs(y="Profit (USD/ton/acre)", x="Year") +
+  # scale_y_log10()+
+  theme_minimal() +
+  theme(
+    axis.title.x = element_text(face = 'bold', size = 11, vjust = -0.4),
+    axis.title.y = element_text(face = 'bold', size = 11, vjust = 2),
+    axis.text.x = element_text(size = 10)
+  )
 ```
 
+**Figure 1.** 

@@ -1,7 +1,7 @@
 #' Almond yield anomaly and profit model
 #'
-#' This function computes the mean annual almond yield anomaly and profit across 
-#' an entire time series of monthly precipitation and minimum temperatures. 
+#' This function computes the annual almond yield anomaly and profit across 
+#' an entire time series based on monthly precipitation and minimum temperature values. 
 #' 
 #' @authors Nick McManus and Katheryn Moya
 #' @param tmin minimum temperature for February (degrees Celsius)
@@ -12,7 +12,7 @@
 #' @param pcoeff2 summed Jan precip coefficient 2 (default = 0.0043)
 #' @param price_ton price of almonds in 2021 (default = 3520 USD/ton/acre)
 #' @param base_profit baseline profit for average almond yield (default = 3168 USD/ton/acre). Assumption that average yield of 0.9 ton/acre
-#' @return almond yield anomaly (tons/acre) and profit per year (USD/tons/acre)
+#' @return almond profit per year (USD/tons/acre)
 
 almond_yield_profit = function(tmin, precip, year, tcoeff1 = -0.015, tcoeff2 = -0.0046, pcoeff1 = -0.07, pcoeff2 = 0.0043, base_profit = 3168, price_ton = 3520) {
 
@@ -36,10 +36,8 @@ almond_yield_profit = function(tmin, precip, year, tcoeff1 = -0.015, tcoeff2 = -
 ### Calculate the yield anomaly for a given year and store as variable
 yield_anomaly = almond_yield(tmin, precip, tcoeff1, tcoeff2, pcoeff1, pcoeff2)
 
-### Find the mean yield
-mean_yield = mean(yield_anomaly)
 
-  
+
       ### Use yield anomaly to then calculate profit
       almond_profit = function(yield_anomaly, base_profit = 3168, price_ton = 3520) {
         profit <<- (base_profit) + (yield_anomaly*price_ton)
@@ -49,13 +47,10 @@ mean_yield = mean(yield_anomaly)
 
 ### Calculate the profit using the yield anomaly for given year
 profit = almond_profit(yield_anomaly, base_profit, price_ton)
-mean_profit = mean(profit)
   
 year = year
 
-## Return list of of yield and profit for each year    
-yield_stats <- as.list(data.frame(year, yield_anomaly, profit))
-    
-return(yield_stats)
+## Return list of profit for each year    
+return(as.list(data.frame(year, profit)))
 
 }
