@@ -164,6 +164,7 @@ ggplot(profit, aes(x = as.factor(year), y = profit, group = year)) +
                alpha = 0.6, width = 0.9) + 
   labs(y="Profit (USD/ton/acre)", x="Year") +
   # scale_y_log10()+
+  # annotation_logticks(sides = 'lr') +
   theme_minimal() +
   theme(
     axis.title.x = element_text(face = 'bold', size = 11, vjust = -0.4),
