@@ -7,7 +7,7 @@ output:
     toc: yes
     toc_float: yes
     theme: cerulean
-    code_folding: hide
+    code_folding: show
     smooth_scroll: yes
     collapsed: yes
 ---
@@ -76,7 +76,7 @@ Given the climate data from 1989-2010, we see that the maximum yield anomaly for
 
 
 
-### Informal Sensitivity Analysis
+### Informal Sensitivity Analysis (in class)
 ```{r}
 ### sample of tcoeff1 values
 tcoeff1_samp <- rnorm(mean = -0.015, sd = 0.01, n = 20)

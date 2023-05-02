@@ -7,7 +7,7 @@ output:
     toc: yes
     toc_float: yes
     theme: cerulean
-    code_folding: hide
+    code_folding: show
     smooth_scroll: yes
     collapsed: yes
 ---
@@ -137,7 +137,7 @@ profit <- map_df(results, `[`, c("year", "profit"))
 # ### Bind results to the input parameter values
 # profit <- cbind.data.frame(profit, params)
 #
-# 
+#
 # p1 = ggplot(yield_profit, aes(x = tcoeff1, y = mean_profit, col=pcoeff2))+
 #   geom_point(cex=2)+
 #   labs(y="Profit (USD/TON/ACRE)", x="tcoeff1")
@@ -173,4 +173,7 @@ ggplot(profit, aes(x = as.factor(year), y = profit, group = year)) +
   )
 ```
 
-**Figure 1.** 
+**Figure 1.** Distribution of annual profits (USD/ton/acre) for almond yield between 1989 and 2010 based on sampled parameters for precipitation, temperature, and price. Mean profits remain fairly consistent across all years with the largest variation in profits driven by an increase in total precipitation (mm).
+
+
+
