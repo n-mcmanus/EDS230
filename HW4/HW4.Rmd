@@ -101,7 +101,7 @@ library(here)
 ```{r}
 # latin hypercube:
 
-source(here(R, Catm.R))
+source(here("R/Catm.R"))
 
 # setting a random seed to make things random
 set.seed(1)
