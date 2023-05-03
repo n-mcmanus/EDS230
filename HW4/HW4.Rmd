@@ -89,3 +89,37 @@ Submit the Rmarkdown (or link to git repo) as usual
 * Discussion (10pts)
   * suggestion for how to reduce uncertainty that follows from your analysis (5pts)
   * idea about how uncertainty might impact estimate of plant water use under climate change (5pts)
+  
+```{r}
+library(sensitivity)
+library(tidyverse)
+library(lhs)
+library(purrr)
+library(here) 
+```
+  
+```{r}
+# latin hypercube:
+
+source(here(R, Catm.R))
+
+# setting a random seed to make things random
+set.seed(1)
+
+pnames = c("v", "height", "zm_add", "k_o", "k_d")
+
+# set the number of parameters (same as pnames)
+npar = length(pnames)
+
+# choose how many samples to generate
+nsample = 100
+
+parm_quant = randomLHS(nsample, npar)
+colnames(parm_quant)=pnames
+# choose distributions for parameters - this would come from
+# what you know about the likely range of variation
+# then use our random samples to pick the quantiles
+
+```
+  
+  
