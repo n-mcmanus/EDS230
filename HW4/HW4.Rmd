@@ -102,9 +102,6 @@ library(here)
 ## Latin Hypercube
 
 ```{r}
-## Read in function
-source(here("R/Catm.R"))
-
 ## setting a random seed to make things random
 set.seed(1)
 
@@ -137,5 +134,37 @@ parm[, "k_o"] = qnorm(parm_quant[, "k_o"], mean = 0.1, sd = 0.1/pvar)
 parm[, "k_d"] = qnorm(parm_quant[, "k_d"], mean = 0.7, sd = 0.7/pvar)
 
 ```
+  
+
+## Run the model
+
+Now we'll run our atmospheric conductance model using our LHS values stored in `parm`. The conductance model results are then bound together with the input parameter values to easily plot and view sensitivities by parameter. 
+
+```{r}
+## Read in function
+source(here("R/Catm.R"))
+
+## Run fxn over all parm values using pmap
+results <- pmap(.l = parm, .f = Catm)
+
+## Convert results into tidy df
+results_df <- as.data.frame(cond) %>% 
+  pivot_longer(everything()) %>% 
+  select(value) %>% 
+  rename(cond_value = value)
+
+## Bind conductance results to input parms
+cond <- cbind.data.frame(parm, results_df)
+
+## use `gather()` to pivot the parms table into tidy format for plots
+cond_tidy =  cond %>%  gather(v, height, k_o, k_d, value="parmvalue", key="parm")
+```
+
+```{r}
+ggplot(cond_tidy, aes(parmvalue, cond_value))+geom_point()+facet_wrap(~parm, scales="free", ncol=5)
+```
+
+  
+  
   
   
