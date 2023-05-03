@@ -129,9 +129,9 @@ parm[,"v"] = qnorm(parm_quant[,"v"], mean = 250, sd=30)
 parm[,"height"] = qunif(parm_quant[,"height"], min = 9.5, max = 10.5)
 
 ## the sd for k_o and k_d values vary by 1%
-pvar = 1
-parm[, "k_o"] = qnorm(parm_quant[, "k_o"], mean = 0.1, sd = 0.1/pvar)
-parm[, "k_d"] = qnorm(parm_quant[, "k_d"], mean = 0.7, sd = 0.7/pvar)
+pvar = 0.01
+parm[, "k_o"] = qnorm(parm_quant[, "k_o"], mean = 0.1, sd = 0.1*pvar)
+parm[, "k_d"] = qnorm(parm_quant[, "k_d"], mean = 0.7, sd = 0.7*pvar)
 
 ```
   
@@ -160,8 +160,29 @@ cond <- cbind.data.frame(parm, results_df)
 cond_tidy =  cond %>%  gather(v, height, k_o, k_d, value="parmvalue", key="parm")
 ```
 
+
+## Plot conductance estiamtes
 ```{r}
-ggplot(cond_tidy, aes(parmvalue, cond_value))+geom_point()+facet_wrap(~parm, scales="free", ncol=5)
+## Labels for facet wrap
+parm_labs <- c("Height (m)", "Kd", "Ko", "Wind speed (m/s)")
+names(parm_labs) <- c("height", "k_d", "k_o", "v")
+
+ggplot(data = cond_tidy, aes(x = parmvalue, y = cond_value))+
+  geom_point(col = 'dodgerblue4', alpha = 0.6, size = 1.5) +
+  facet_wrap(~parm, scales="free", ncol=4, 
+             labeller = labeller(parm = parm_labs)) +
+  labs(y = "Conductance (mm/s)",
+       x = "Parameter value") +
+theme_bw() +
+  theme(
+    axis.title.x = element_text(face = 'bold', size = 9.5, vjust = -0.5),
+    axis.title.y = element_text(face = 'bold', size = 9.5, vjust = 2),
+    axis.text = element_text(size = 7),
+    panel.grid.minor.y = element_blank(),
+    strip.text = element_text(face = 'bold'),
+    strip.background = element_rect(fill = 'honeydew2'),
+    legend.position = "none"
+  )
 ```
 
   
