@@ -98,41 +98,43 @@ library(purrr)
 library(here) 
 ```
   
-```{r}
-# latin hypercube:
+  
+## Latin Hypercube
 
+```{r}
+## Read in function
 source(here("R/Catm.R"))
 
-# setting a random seed to make things random
+## setting a random seed to make things random
 set.seed(1)
 
-pnames = c("v", "height", "zm_add", "k_o", "k_d")
+pnames = c("v", "height", "k_o", "k_d")
 
-# set the number of parameters (same as pnames)
+## set the number of parameters (same as pnames)
 npar = length(pnames)
 
-# choose how many samples to generate
+## choose how many samples to generate
 nsample = 100
 
+## Create matrix with LHS values based on sample size and parameter names
 parm_quant = randomLHS(nsample, npar)
 colnames(parm_quant)=pnames
-# choose distributions for parameters - this would come from
-# what you know about the likely range of variation
-# then use our random samples to pick the quantiles
+
+
+## Create empty df to store values in next step
+## Make sure it is the same size as our parm_quant matrix
 parm = as.data.frame(matrix(nrow=nrow(parm_quant), ncol=ncol(parm_quant)))
 colnames(parm) = pnames
-# I don't think this worked.. it looks very odd
-# for each parameter pick samples 
-# I'm using several examples normal distribution (with 10% standard deviation) and uniform with +- 10%
-# in reality I should pick distribution from knowledge about uncertainty in parameters
 
-# to make it easy to change i'm setting standard deviation / range variation to a variable
-pvar = 1
-
-# I got kind of confused here on which variables to use in which order/if it matters??
+## Now we fill in the columns in the df with normal/uniform distributed values
+## that are pulled from parm_quant matrix
 parm[,"v"] = qnorm(parm_quant[,"v"], mean = 250, sd=30)
 parm[,"height"] = qunif(parm_quant[,"height"], min = 9.5, max = 10.5)
-parm[, "k_o"] = qnorm(parm)
+
+## the sd for k_o and k_d values vary by 1%
+pvar = 1
+parm[, "k_o"] = qnorm(parm_quant[, "k_o"], mean = 0.1, sd = 0.1/pvar)
+parm[, "k_d"] = qnorm(parm_quant[, "k_d"], mean = 0.7, sd = 0.7/pvar)
 
 ```
   
