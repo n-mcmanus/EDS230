@@ -119,7 +119,6 @@ colnames(parm_quant)=pnames
 # choose distributions for parameters - this would come from
 # what you know about the likely range of variation
 # then use our random samples to pick the quantiles
-
 parm = as.data.frame(matrix(nrow=nrow(parm_quant), ncol=ncol(parm_quant)))
 colnames(parm) = pnames
 # I don't think this worked.. it looks very odd
@@ -128,11 +127,12 @@ colnames(parm) = pnames
 # in reality I should pick distribution from knowledge about uncertainty in parameters
 
 # to make it easy to change i'm setting standard deviation / range variation to a variable
-pvar = 10
+pvar = 1
 
 # I got kind of confused here on which variables to use in which order/if it matters??
-parm[,"v"] = qnorm(parm_quant[,"v"], mean=-0.015, sd=0.015/pvar)
-parm[,"height"] = qnorm(parm_quant[,"height"], mean=-0.0046, sd=0.0046/pvar)
+parm[,"v"] = qnorm(parm_quant[,"v"], mean = 250, sd=30)
+parm[,"height"] = qunif(parm_quant[,"height"], min = 9.5, max = 10.5)
+parm[, "k_o"] = qnorm(parm)
 
 ```
   
