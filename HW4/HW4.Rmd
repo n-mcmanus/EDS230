@@ -148,7 +148,7 @@ source(here("R/Catm.R"))
 results <- pmap(.l = parm, .f = Catm)
 
 ## Convert results into tidy df
-results_df <- as.data.frame(cond) %>% 
+results_df <- as.data.frame(results) %>% 
   pivot_longer(everything()) %>% 
   select(value) %>% 
   rename(cond_value = value)
@@ -158,10 +158,24 @@ cond <- cbind.data.frame(parm, results_df)
 
 ## use `gather()` to pivot the parms table into tidy format for plots
 cond_tidy =  cond %>%  gather(v, height, k_o, k_d, value="parmvalue", key="parm")
+
+cond_violin <- cond_tidy %>% 
+  filter(parm == "v")
 ```
 
 
 ## Plot conductance estiamtes
+
+Gross violin:
+```{r}
+ggplot(data = cond_violin, aes(y = cond_value, x = parm)) +
+  geom_violin(width = .5, col = 'dodgerblue4', fill = 'dodgerblue1', alpha = .2) +
+   geom_jitter(width = .1, col = 'dodgerblue4', alpha = 0.6, size = 1.5) +
+  theme_minimal() 
+```
+
+
+Nicer boxplots:
 ```{r}
 ## Labels for facet wrap
 parm_labs <- c("Height (m)", "Kd", "Ko", "Wind speed (m/s)")
@@ -186,6 +200,18 @@ theme_bw() +
 ```
 
   
-  
-  
+## Partial Rank Correlation Coefficients
+
+```{r}
+sen_result = sensitivity::pcc(X = parm, y = results_df$cond_value, rank = TRUE)
+
+sen_result
+
+### put in nice table??
+
+## Plot of results
+plot(sen_result)
+```
+
+Our results tell us that aerodynamic conductance is most sensitive to wind speed, followed by vegetation height. This suggests that it’s vital to have accurate windspeed data to reduce uncertainties. As the climate changes, increased conductance could increase the amount of water that plants require. This is particularly true if climate change results in increased windspeeds, which in turn will cause higher evapotranspiration rates. More accurate projections of future windspeed and plant height would therefore lead to decreased uncertainty in aerodynamic conductance estimates and plant water use. 
   
