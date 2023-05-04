@@ -96,6 +96,7 @@ library(tidyverse)
 library(lhs)
 library(purrr)
 library(here) 
+library(ggpubr)
 ```
   
   
@@ -168,10 +169,24 @@ cond_violin <- cond_tidy %>%
 
 Gross violin:
 ```{r}
-ggplot(data = cond_violin, aes(y = cond_value, x = parm)) +
+ggplot(data = cond_tidy, aes(y = cond_value, x = parm)) +
   geom_violin(width = .5, col = 'dodgerblue4', fill = 'dodgerblue1', alpha = .2) +
    geom_jitter(width = .1, col = 'dodgerblue4', alpha = 0.6, size = 1.5) +
   theme_minimal() 
+
+p1<-ggplot(data = cond, aes(x = height)) +
+  geom_density()
+
+p2<-ggplot(data=cond, aes(x=v)) +
+  geom_density()
+
+p3<-ggplot(data=cond, aes(x=k_o)) +
+  geom_density()
+
+p4<-ggplot(data=cond, aes(x=k_d)) +
+  geom_density()
+
+ggarrange(p1, p2, p3, p4)
 ```
 
 
