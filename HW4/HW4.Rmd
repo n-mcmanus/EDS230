@@ -22,7 +22,7 @@ library(sensitivity)
 library(tidyverse)
 library(lhs)
 library(purrr)
-library(here) 
+library(here)
 library(ggpubr)
 ```
   
@@ -94,13 +94,8 @@ cond_violin <- cond_tidy %>%
 
 ## Plot conductance estiamtes
 
-Gross violin:
 ```{r}
-ggplot(data = cond_tidy, aes(y = cond_value, x = parm)) +
-  geom_violin(width = .5, col = 'dodgerblue4', fill = 'dodgerblue1', alpha = .2) +
-   geom_jitter(width = .1, col = 'dodgerblue4', alpha = 0.6, size = 1.5) +
-  theme_minimal() 
-
+# Density plots to display parameter uncertainty input values
 p1<-ggplot(data = cond, aes(x = height)) +
   geom_density()
 
@@ -117,7 +112,6 @@ ggarrange(p1, p2, p3, p4)
 ```
 
 
-Nicer boxplots:
 ```{r}
 ## Labels for facet wrap
 parm_labs <- c("Height (m)", "Kd", "Ko", "Wind speed (m/s)")
@@ -148,8 +142,6 @@ theme_bw() +
 sen_result = sensitivity::pcc(X = parm, y = results_df$cond_value, rank = TRUE)
 
 sen_result
-
-### put in nice table??
 
 ## Plot of results
 plot(sen_result)
