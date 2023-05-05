@@ -1,5 +1,5 @@
 ---
-title: "HW4: Sensitivity"
+title: "Assignment 4: Sensitivity with LHS"
 author: "Nick McManus, Caroline Shepherd, Alia Ajina"
 date: "2023-05-02"
 output: 
@@ -11,8 +11,6 @@ output:
     smooth_scroll: yes
     collapsed: yes
 ---
-
-# Assignment 4: Sensitivity
 
 
 ```{r setup, include=FALSE}
@@ -28,6 +26,7 @@ library(ggpubr)
   
   
 ## Latin Hypercube
+First, we'll generate a list of samples of our four parameters (wind speed, vegetation height, roughness, and zero plane displacement) using the Latin Hypercube method. These values are stored in the object `parm`.
 
 ```{r}
 ## Setting a random seed to make things 'random'
@@ -65,7 +64,7 @@ parm[, "k_d"] = qnorm(parm_quant[, "k_d"], mean = 0.7, sd = 0.7*pvar)
 
 ## Run the model
 
-Now we'll run our atmospheric conductance model using our LHS values stored in `parm`. The conductance model results are then bound together with the input parameter values to easily plot and view sensitivities by parameter. 
+Now we'll run our atmospheric conductance model using our LHS values. The conductance model results are then bound together with the input parameter values to easily plot and view sensitivities by parameter. 
 
 ```{r}
 ## Read in function
@@ -92,21 +91,22 @@ cond_violin <- cond_tidy %>%
 ```
 
 
-## Plot conductance estimates
+## Plot results
 
+First, we'll visualize the parameter uncertainty used in generating our conductance estimates through a series of density plots. As displayed below, the vegetation height parameter samples were uniformly distributed, while the remaining three parameters samples were normally distributed.  
 ```{r}
 # Density plots to display parameter uncertainty input values
 p1<-ggplot(data = cond, aes(x = height)) +
-  geom_density() + labs(x = "Vegetation Height (m)", y = "Density")
+  geom_density() + labs(x = "Vegetation Height (m)", y = "Density") 
 
 p2<-ggplot(data=cond, aes(x=v)) +
-  geom_density() + labs(x = "Windspeed (m/s)", y = "Density")
+  geom_density() + labs(x = "Windspeed (m/s)", y = "Density") 
 
 p3<-ggplot(data=cond, aes(x=k_o)) +
-  geom_density() + labs(x = "Ko", y = "Density")
+  geom_density() + labs(x = "Ko", y = "Density") 
 
 p4<-ggplot(data=cond, aes(x=k_d)) +
-  geom_density() + labs(x = "Kd", y = "Density")
+  geom_density() + labs(x = "Kd", y = "Density") 
 
 
 ## Arranging our density plots
@@ -114,6 +114,7 @@ ggarrange(p1, p2, p3, p4)
 ```
 
 
+Next, we'll plot the model conductance estimates against each of the parameters. These results demonstrate that wind speed has the strongest linear relationship with the conductance model outputs.
 ```{r}
 ## Labels for facet wrap
 parm_labs <- c("Height (m)", "Kd", "Ko", "Wind speed (m/s)")
@@ -139,8 +140,7 @@ theme_bw() +
 ```
 
   
-## Partial Rank Correlation Coefficients
-
+Finally, we'll find the partial rank correlation coefficient values and plot the results below.
 ```{r}
 sen_result = pcc(X = parm, y = results_df$cond_value, rank = TRUE)
 
