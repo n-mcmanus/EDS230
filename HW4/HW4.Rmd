@@ -30,15 +30,15 @@ library(ggpubr)
 ## Latin Hypercube
 
 ```{r}
-## setting a random seed to make things random
+## Setting a random seed to make things 'random'
 set.seed(1)
 
 pnames = c("v", "height", "k_o", "k_d")
 
-## set the number of parameters (same as pnames)
+## Set the number of parameters (same as pnames)
 npar = length(pnames)
 
-## choose how many samples to generate
+## Choose how many samples to generate
 nsample = 100
 
 ## Create matrix with LHS values based on sample size and parameter names
@@ -51,12 +51,11 @@ colnames(parm_quant)=pnames
 parm = as.data.frame(matrix(nrow=nrow(parm_quant), ncol=ncol(parm_quant)))
 colnames(parm) = pnames
 
-## Now we fill in the columns in the df with normal/uniform distributed values
-## that are pulled from parm_quant matrix
+## Now we fill in the columns in the df with normal/uniform distributed values that are pulled from parm_quant matrix
 parm[,"v"] = qnorm(parm_quant[,"v"], mean = 250, sd=30)
 parm[,"height"] = qunif(parm_quant[,"height"], min = 9.5, max = 10.5)
 
-## the sd for k_o and k_d values vary by 1%
+## SD for k_o and k_d values vary by 1%
 pvar = 0.01
 parm[, "k_o"] = qnorm(parm_quant[, "k_o"], mean = 0.1, sd = 0.1*pvar)
 parm[, "k_d"] = qnorm(parm_quant[, "k_d"], mean = 0.7, sd = 0.7*pvar)
@@ -84,9 +83,10 @@ results_df <- as.data.frame(results) %>%
 ## Bind conductance results to input parms
 cond <- cbind.data.frame(parm, results_df)
 
-## use `gather()` to pivot the parms table into tidy format for plots
+## Use `gather()` to pivot the parms table into tidy format for plots
 cond_tidy =  cond %>%  gather(v, height, k_o, k_d, value="parmvalue", key="parm")
 
+## Considered making violin plots but we decided to create density plots instead
 cond_violin <- cond_tidy %>% 
   filter(parm == "v")
 ```
@@ -97,17 +97,19 @@ cond_violin <- cond_tidy %>%
 ```{r}
 # Density plots to display parameter uncertainty input values
 p1<-ggplot(data = cond, aes(x = height)) +
-  geom_density()
+  geom_density() + labs(x = "Vegetation Height (m)", y = "Density")
 
 p2<-ggplot(data=cond, aes(x=v)) +
-  geom_density()
+  geom_density() + labs(x = "Windspeed (m/s)", y = "Density")
 
 p3<-ggplot(data=cond, aes(x=k_o)) +
-  geom_density()
+  geom_density() + labs(x = "Ko", y = "Density")
 
 p4<-ggplot(data=cond, aes(x=k_d)) +
-  geom_density()
+  geom_density() + labs(x = "Kd", y = "Density")
 
+
+## Arranging our density plots
 ggarrange(p1, p2, p3, p4)
 ```
 
@@ -117,6 +119,7 @@ ggarrange(p1, p2, p3, p4)
 parm_labs <- c("Height (m)", "Kd", "Ko", "Wind speed (m/s)")
 names(parm_labs) <- c("height", "k_d", "k_o", "v")
 
+## Plotting our parameter sensitivity
 ggplot(data = cond_tidy, aes(x = parmvalue, y = cond_value))+
   geom_point(col = 'dodgerblue4', alpha = 0.6, size = 1.5) +
   facet_wrap(~parm, scales="free", ncol=4, 
