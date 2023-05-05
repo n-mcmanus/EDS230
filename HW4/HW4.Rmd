@@ -92,7 +92,7 @@ cond_violin <- cond_tidy %>%
 ```
 
 
-## Plot conductance estiamtes
+## Plot conductance estimates
 
 ```{r}
 # Density plots to display parameter uncertainty input values
@@ -142,9 +142,7 @@ theme_bw() +
 ## Partial Rank Correlation Coefficients
 
 ```{r}
-sen_result = sensitivity::pcc(X = parm, y = results_df$cond_value, rank = TRUE)
-
-sen_result
+sen_result = pcc(X = parm, y = results_df$cond_value, rank = TRUE)
 
 ## Plot of results
 plot(sen_result)
