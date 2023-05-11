@@ -1,0 +1,10 @@
+---
+title: "HW5"
+author: "Nick McManus, Katheryn Moya, Kort Alexander"
+date: "2023-05-11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
