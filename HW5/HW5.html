@@ -1582,8 +1582,10 @@ border-radius: 0px;
 
 <div id="part-1-combined-metric" class="section level2">
 <h2>Part 1: Combined Metric</h2>
-<p>This metric finds the RMSE of the peak and minimum flow for each
-water year, then combines them with equal weight.</p>
+<p>This metric finds the RMSE (root mean squared error) of the peak and
+minimum flow for each water year, then combines them with equal weight.
+We chose this metric because we wanted to evaluate how well the model
+parameters can predict extreme flow events.</p>
 <pre class="r"><code>## Read in Sagehen water data
 sager = read.table(&quot;sager.txt&quot;, header=T)
 # head(sager)

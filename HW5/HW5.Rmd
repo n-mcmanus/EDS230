@@ -28,7 +28,7 @@ library(here)
 
 ## Part 1: Combined Metric
 
-This metric finds the RMSE of the peak and minimum flow for each water year, then combines them with equal weight. 
+This metric finds the RMSE (root mean squared error) of the peak and minimum flow for each water year, then combines them with equal weight. We chose this metric because we wanted to evaluate how well the model parameters can predict extreme flow events. 
 ```{r}
 ## Read in Sagehen water data
 sager = read.table("sager.txt", header=T)
