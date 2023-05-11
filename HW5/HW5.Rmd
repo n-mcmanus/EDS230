@@ -1,10 +1,167 @@
 ---
-title: "HW5"
+title: "HW5: Calibration Nation"
 author: "Nick McManus, Katheryn Moya, Kort Alexander"
 date: "2023-05-11"
-output: html_document
+output: 
+ html_document: 
+    toc: yes
+    toc_float: yes
+    theme: cerulean
+    code_folding: show
+    smooth_scroll: yes
+    collapsed: yes
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r setup, include=FALSE, message = FALSE, warning = FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+
+
+library(sensitivity)
+library(tidyverse)
+library(lubridate)
+library(reldist)
+library(purrr)
+library(ggpubr)
+library(here)
 ```
+
+
+## Part 1: Combined Metric
+
+This metric finds the RMSE of the peak and minimum flow for each water year, then combines them with equal weight. 
+```{r}
+## Read in Sagehen water data
+sager = read.table("sager.txt", header=T)
+# head(sager)
+
+# add date
+sager = sager %>% mutate(date = paste(day,month,year, sep="/"))
+sager$date = as.Date(sager$date,"%d/%m/%Y")
+
+## Read in the model
+source(here("R/combined_rmse.R"))
+
+## Test the model
+combo_rmse(m = sager$model, o = sager$obs, wy = sager$wy)
+```
+
+## Part 2: Sagehen Data
+
+Read in sagem and rename parameters and then add dates using sager data 
+```{r}
+# multiple results - lets say we've run the model for multiple years, 
+#each column  is streamflow for a different parameter set
+msage = read.table("sagerm.txt", header=T)
+
+# keep track of number of simulations (e.g results for each parameter set) 
+# use as a column names
+nsim = ncol(msage)
+snames = sprintf("S%d",seq(from=1, to=nsim))
+colnames(msage)=snames
+
+
+# lets say we know the start date from our earlier output
+msage$date = sager$date
+msage$month = sager$month
+msage$year = sager$year
+msage$day = sager$day
+msage$wy = sager$wy
+
+# lets add observed
+msage = left_join(msage, sager[,c("obs","date")], by=c("date"))
+
+# head(msage)
+
+# how can we plot all results - lets plot water year 1970 otherwise its hard to see
+msagel = msage %>% pivot_longer(cols=!c(date, month, year, day,wy), names_to="run", values_to="flow")
+
+# ## Plot the msagel data
+# p1=ggplot(subset(msagel, wy == 1970), aes(as.Date(date), flow, col=run))+geom_line()+theme(legend.position = "none")
+# p1
+# 
+# # lets add observed streamflow
+# p1+geom_line(data=subset(sager, wy == 1970), aes(as.Date(date), obs), size=2, col="black", linetype=2)+labs(y="Streamflow", x="Date")
+```
+
+
+
+```{r}
+# subset for split sample calibration
+short_msage = subset(msage, wy > 1980)
+
+
+# another example using our low flow statistics
+# use apply to compute for all the data
+res = short_msage %>% select(!c(date, month, day, year, wy, obs)) %>%
+  map_dbl(combo_rmse, o=short_msage$obs, wy=short_msage$wy)
+
+
+# interesting to look at range of metrics - could use this to decide on
+# acceptable values
+# summary(res)
+res = as.data.frame(res)
+
+
+# we can add a row that links with simulation number
+res$sim = snames
+
+# graph range of performance measures
+resl = res %>% pivot_longer(-sim, names_to="metric", values_to="value")
+
+# ggplot(resl, aes(metric, value))+geom_boxplot()+facet_wrap(~metric, scales="free")
+```
+
+
+Find the best and worst
+```{r}
+# select the best one based on the combined metric
+best = res[which.max(res$res),]
+
+# running the model forward
+# so we can look at the full time series
+
+# lets start with streamflow estimates from best performing parameter set
+ # ggplot(msage, aes(date, msage[,best$sim])) + geom_line()+geom_line(aes(date, obs), col="red") 
+
+ 
+# for comparison lets consider how worst and best parameters perform for subsequent simulations
+# focusing specifically on August streamflow
+ res_no0 = res %>% 
+   filter(res >0)
+ 
+ worst = res_no0[which.min(res_no0$res),]
+```
+
+
+Plot baby plot
+```{r}
+ compruns = msage %>% select(best$sim, worst$sim, date, obs, month, day, year, wy)
+ compruns = subset(compruns, wy > 1980)
+ 
+ compruns_mwy = compruns %>% select(-c(day,date, year)) %>% group_by(month, wy) %>% summarize(across(everything(), mean))
+ 
+ compruns_mwyl = compruns_mwy %>% pivot_longer(cols=!c(month,wy), names_to="sim", values_to="flow")
+ comprunsl = compruns %>%  
+   filter(wy == 1983) %>% 
+   select(!c(month, year, day, wy)) %>% 
+   pivot_longer(cols=!c(date), names_to="sim", values_to="flow")
+ 
+ ## Box plot
+ compruns_mwyl %>% subset(month==8) %>% 
+   ggplot(aes(sim,flow ))+
+   geom_boxplot(color = c("black", "coral4", "dodgerblue4"),
+                fill = c("black", "coral2", "dodgerblue2"), alpha = 0.3) +
+   labs(x = element_blank(),
+        y = "Flow rate (mm/day)") +
+   theme_minimal()
+ 
+## Plot the msagel data
+ggplot(subset(comprunsl), aes(as.Date(date), flow, col=sim))+
+  geom_line(size = 0.8)+
+  scale_color_manual(values = c("black", "coral2", "dodgerblue2")) +
+  labs(x = element_blank(),
+       y = "Flow rate (mm/day)",
+       color = element_blank()) +
+  theme_minimal()
+```
+
