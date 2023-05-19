@@ -1,5 +1,5 @@
 ---
-title: 'HW6: Sobol and ODE'
+title: 'HW6: Sobel and ODE'
 author: "Nick McManus"
 date: "2023-05-19"
 output: 
@@ -9,28 +9,79 @@ output:
     theme: cerulean
     code_folding: show
     smooth_scroll: yes
-    collapsed: yes---
+    collapsed: yes
+---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r setup, include=FALSE, message = FALSE, warning = FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+library(sensitivity)  ## Sobel
+library(deSolve)      ## ode solver
+library(tidyverse)
+library(here)
 ```
 
-## R Markdown
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r}
+### read in function
+source(here("R/forest_growth.R"))
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
+## ODE solver w/o sensitivity
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+First run the model for 300 years (using ODE solver) within an initial forest size of 10 kgC and the following parameter values:
+-   canopy closure threshold = 50 kgC
+-   K = 250 kgC
+-   r = 0.01
+-   g = 2 kg/yr
+
+```{r}
+## set initial forest size
+Cinitial = 10
+
+## set parameter values then bind as df
+K = 250
+r = 0.01
+g = 2
+closure = 50
+
+params = cbind.data.frame(K, r, g, closure)
+
+## sequence of times for 300 years
+time = seq(from = 1, to = 300)
+
+## Run ODE solver and save results as df
+result = ode(y = Cinitial, times = time, func = forest_growth, parms = params)
+colnames(result) = c("time", "C")
+result = as.data.frame(result)
+
+## Visualize results
+ggplot(result, aes(x = time, y = C)) + 
+  geom_line(size = 0.8, color = "forestgreen")+
+  labs(x = "Years passed",
+       y = "Forest size (kg C)") +
+  scale_x_continuous(limits = c(0, 300), breaks = seq(0, 300, by=50), expand = c(0,0))+
+  scale_y_continuous(limits = c(0, 200), expand = c(0,0)) +
+  theme_minimal() +
+  theme(
+    axis.title.x = element_text(size = 10, face = 'bold', vjust = -0.5),
+    axis.title.y = element_text(size = 10, face = 'bold', vjust = 2)
+  )
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

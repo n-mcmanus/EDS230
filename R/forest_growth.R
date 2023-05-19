@@ -14,10 +14,10 @@ forest_growth = function(time, C, params) {
   ## Rate of growth depending on canopy closure threshold
   dC = ifelse(C < params$closure, 
               params$r * C, 
-              params$g * (1-C/params$K))
+              params$g * (1-(C/params$K)))
   
   ## Rate of growth also depending on carrying capacity
-  dC = ifelse(C >= params$K, 0, dC)
+  # dC = ifelse(C >= params$K, 0, dC)
  
   return(list(dC)) 
 }
