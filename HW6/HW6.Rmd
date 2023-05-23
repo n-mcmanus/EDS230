@@ -1,6 +1,6 @@
 ---
-title: 'HW6: Sobel and ODE'
-author: "Nick McManus"
+title: 'HW6: Forest Size Sensitivity using Sobol and ODE'
+author: "Nick McManus & Katheryn Moya"
 date: "2023-05-19"
 output: 
  html_document: 
@@ -14,7 +14,7 @@ output:
 
 ```{r setup, include=FALSE, message = FALSE, warning = FALSE}
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
-library(sensitivity)  ## Sobel
+library(sensitivity)  ## Sobol
 library(deSolve)      ## ode solver
 library(tidyverse)
 library(here)
@@ -29,32 +29,38 @@ source(here("R/forest_growth.R"))
 
 ## ODE solver w/o sensitivity
 
-First run the model for 300 years (using ODE solver) within an initial forest size of 10 kgC and the following parameter values:
--   canopy closure threshold = 50 kgC
--   K = 250 kgC
--   r = 0.01
--   g = 2 kg/yr
+First we'll run the model (using the ODE solver) to determine the forest size after 300 years and visualize the results. For this run, we'll make the following assumptions:
+-   initial forest size (Cinnitial) of 10 kgC
+-   canopy closure threshold (closure) of 50 kgC
+-   carrying capacity (K) of 250 kgC
+-   growth rate before canopy closure (r) of 0.01
+-   growth rate after canopy closure (g) of 2 kg/yr
 
 ```{r}
 ## set initial forest size
 Cinitial = 10
 
 ## set parameter values then bind as df
-K = 250
+k = 250
 r = 0.01
 g = 2
 closure = 50
 
-params = cbind.data.frame(K, r, g, closure)
+params = cbind.data.frame(k, r, g, closure)
+
 
 ## sequence of times for 300 years
 time = seq(from = 1, to = 300)
+
 
 ## Run ODE solver and save results as df
 result = ode(y = Cinitial, times = time, func = forest_growth, parms = params)
 colnames(result) = c("time", "C")
 result = as.data.frame(result)
+```
 
+
+```{r}
 ## Visualize results
 ggplot(result, aes(x = time, y = C)) + 
   geom_line(size = 0.8, color = "forestgreen")+
@@ -62,14 +68,65 @@ ggplot(result, aes(x = time, y = C)) +
        y = "Forest size (kg C)") +
   scale_x_continuous(limits = c(0, 300), breaks = seq(0, 300, by=50), expand = c(0,0))+
   scale_y_continuous(limits = c(0, 200), expand = c(0,0)) +
-  theme_minimal() +
+  theme_classic() +
   theme(
     axis.title.x = element_text(size = 10, face = 'bold', vjust = -0.5),
     axis.title.y = element_text(size = 10, face = 'bold', vjust = 2)
   )
 ```
 
+**Figure 1.** Caption here
 
+
+
+## Sobol global
+
+Now we'll perform a sensitivity analysis that explores how the estimated maximum forest size (max C over 300 years) varies with changes to three parameters: r, g, and K. 
+-   We'll assume normal distribution with standard deviation of 10%
+
+```{r}
+## all will have standard dev of 10%
+sd = 0.1
+## we'll make 1000 for each
+nsample = 1000
+
+
+## create two samples of parameter values
+r_sobol = rnorm(mean = r, sd = r*sd, n = nsample)
+g_sobol = rnorm(mean = g, sd = g*sd, n = nsample)
+k_sobol = rnorm(mean = k, sd = k*sd, n = nsample)
+param1 = cbind.data.frame(r = r_sobol, g = g_sobol, k = k_sobol)
+
+r_sobol = rnorm(mean = r, sd = r*sd, n = nsample)
+g_sobol = rnorm(mean = g, sd = g*sd, n = nsample)
+k_sobol = rnorm(mean = k, sd = k*sd, n = nsample)
+param2 = cbind.data.frame(r = r_sobol, g = g_sobol, k = k_sobol)
+
+## fix in case you get negatives
+param1 = param1 %>% map_df(pmax, 0)
+param2 = param2 %>% map_df(pmax, 0)
+```
+
+
+```{r}
+## get sobol object from parameter sets
+sens_c = sobolSalt(model = NULL, X1 = param1, X2 = param2, nboot = 300)
+
+## view outputs
+# head(sens_c$X)
+
+## rename columns
+colnames(sens_c$X) = c("r", "g", "k")
+
+
+## 
+params_sobol <- list(r = sens_c$X[1, "r"], g = sens_c$X[1, "g"], k = sens_c$X[1,"k"], closure = closure)
+
+result_sobol = ode(y = Cinitial, times = time, 
+                   func = forest_growth, parms = params_sobol)
+colnames(result) = c("time", "C")
+result = as.data.frame(result)
+```
 
 
 
