@@ -1,6 +1,6 @@
 ---
 title: 'HW6: Forest Size Sensitivity using Sobol and ODE'
-author: "Nick McManus & Katheryn Moya"
+author: "Nick McManus"
 date: "2023-05-19"
 output: 
  html_document: 
@@ -12,19 +12,13 @@ output:
     collapsed: yes
 ---
 
-```{r setup, include=FALSE, message = FALSE, warning = FALSE}
+```{r setup, include=TRUE, message = FALSE, warning = FALSE}
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 library(sensitivity)  ## Sobol
 library(deSolve)      ## ode solver
 library(kableExtra)   ## nice tables
-library(tidyverse)
-library(here)
-```
-
-
-```{r}
-### read in function
-source(here("R/forest_growth.R"))
+library(tidyverse)    ## always
+library(here)         ## stable file paths
 ```
 
 
@@ -37,7 +31,11 @@ First we'll run the model (using the ODE solver) to determine the forest size af
 -   growth rate before canopy closure (r) of 0.01
 -   growth rate after canopy closure (g) of 2 kg/yr
 
+
 ```{r}
+## read in function
+source(here("R/forest_growth.R"))
+
 ## set initial forest size
 Cinitial = 10
 
@@ -69,6 +67,7 @@ ggplot(result, aes(x = time, y = C)) +
        y = "Forest size (kg C)") +
   scale_x_continuous(limits = c(0, 300), breaks = seq(0, 300, by=50), expand = c(0,0))+
   scale_y_continuous(limits = c(0, 200), expand = c(0,0)) +
+  geom_line(y = 50, linetype = 'dashed') +
   theme_classic() +
   theme(
     axis.title.x = element_text(size = 10, face = 'bold', vjust = -0.5),
@@ -76,14 +75,13 @@ ggplot(result, aes(x = time, y = C)) +
   )
 ```
 
-**Figure 1.** Caption here
+**Figure 1.** Forest size (kg C) over 300 years based on given growth rates before and after meeting a canopy closure threshold (marked with dashed line). At 100 years, the forest size is `r round(result$C[100],2)` kg C. The maximum forest size during this period is `r round(max(result$C),2)` kg C.
 
 
 
 ## Sobol global
 
-Now we'll perform a sensitivity analysis that explores how the estimated maximum forest size (max C over 300 years) varies with changes to three parameters: r, g, and K. 
--   We'll assume normal distribution with standard deviation of 10%
+Now we'll perform a sensitivity analysis that explores how changes in three parameters -- r, g, and K -- change two metrics of interest: maximum forest size over the 300 years, and forest size after 100 years. When creating sample values for the parameters, we'll assume a normal distribution with standard deviation of 10%
 
 First, create a sample of parameter values using sobol.
 ```{r}
@@ -119,7 +117,7 @@ colnames(sens_c$X) = c("r", "g", "k")
 ```
 
 
-Now we'll create a wrapper function so that we can use `map()` to run the ODE solver and find the maximum forest size for each set of parameters. The one parameter we are not changing is the canopy closure threshold, which remains 50 kgC as before. 
+Now we'll create a wrapper function so that we can use `map()` to run the ODE solver and find the metrics of interest for each set of parameters. The one parameter we are not changing is the canopy closure threshold, which remains at 50 kgC. 
 ```{r}
 ## create wrapper fxn to run ODE and return max forest size
 c_wrapper = function(r, g, k, closure, Cinitial, times, func) {
@@ -130,9 +128,10 @@ c_wrapper = function(r, g, k, closure, Cinitial, times, func) {
     colnames(result)=c("time","C")
     result = as.data.frame(result)
     
-    ## get max forest size
-    max_c = max(result$C)
-  return(list(max_c = max_c))
+    ## get max forest size overall and at 100 yrs
+    c_max = max(result$C)
+    c_100 = result$C[100]
+  return(list(c_max = c_max, c_100 = c_100))
 }
 
 
@@ -143,55 +142,85 @@ allresults = as.data.frame(sens_c$X) %>%
        times = simtime, func = forest_growth)
 
 ## extract values from bad list format
-allres = allresults %>% map_dfr(`[`,"max_c")
+allres = allresults %>% map_dfr(`[`,c("c_max", "c_100"))
 ```
 
 ```{r}
 ### Now visualize the sensitivity results!
 
 ## pivot df so that you can adjust width box plot lol
-tmp = allres %>% 
+allres_tidy = allres %>% 
   gather(key = "metric", value = "value")
 
 ## create the boxplot
-ggplot(data = tmp, aes(x = metric, y = value)) +
-  geom_boxplot(fill = "#7E8F13", color = "#3E5409",
-               alpha = 0.4, size = 0.7, width = 0.4) +
-  labs(y = "Maximum forest size (kgC)",
+ggplot(data = allres_tidy, aes(x = metric, y = value, color = metric, fill = metric)) +
+  geom_boxplot(alpha = 0.4, size = 0.7, width = 0.5) +
+  labs(y = "Forest size (kg C)",
        x = element_blank())+
+  scale_color_manual(values=c("#19270d", "#3E5409")) +
+  scale_fill_manual(values=c("darkseagreen3", "#7E8F13")) +
+  scale_x_discrete(labels = c("100 years", "Maximum")) +
   theme_minimal() +
   theme(
     axis.title.y = element_text(vjust = 3, face = 'bold'),
-    axis.ticks.x = element_blank(),
-    axis.text.x = element_blank()
+    axis.text.x = element_text(face = 'bold', size = 10),
+    legend.position = "none"
   )
 
 ```
 
-**Figure 2.** Caption here
+**Figure 2.** Sensitivity analysis of maximum forest size (kg C) and forest size after 100 years. The forest growth model was run with varying growth rates before and after the canopy closure threshold as well as forest carrying capacity. The mean maximum forest size is `r round(mean(allres$c_max), 2)` kg C, while the mean forest size after 100 years is `r round(mean(allres$c_100),2)` kg C. 
 
 ```{r}
 ## sobol indices
-sens_forest = sensitivity::tell(sens_c, allres$max_c)
+sens_forest_max = sensitivity::tell(sens_c, allres$c_max)
+sens_forest_100 = sensitivity::tell(sens_c, allres$c_100)
 
-## put indices in "tidy" format for tables
-sens_T <- as.data.frame(sens_forest$T)
-row.names(sens_T) <- NULL
-sens_T <- add_column(.data = sens_T, parameters = c("r", "g", "k"), .before = 1)
+## total indices for both metrics (max and 100 yrs)
+sens_T_max <- as.data.frame(sens_forest_max$T)
+row.names(sens_T_max) <- NULL
+sens_T_max <- add_column(.data = sens_T_max, 
+                         metric = c("max size", "max size", "max size"), 
+                         parameter = c("r", "g", "k"),
+                         .before = 1)
 
-sens_S <- as.data.frame(sens_forest$S)
-row.names(sens_S) <- NULL
-sens_S <- add_column(.data = sens_S, parameter = c("r", "g", "k"), .before = 1)
+sens_T_100 <- as.data.frame(sens_forest_100$T)
+row.names(sens_T_100) <- NULL
+sens_T_100 <- add_column(.data = sens_T_100, 
+                         metric = c("100 years", "100 years", "100 years"), 
+                         parameter = c("r", "g", "k"),
+                         .before = 1)
+
+## bind into one df
+sens_T<- rbind(sens_T_max, sens_T_100)
+
+
+## Repeat for first order index
+sens_S_max <- as.data.frame(sens_forest_max$S)
+row.names(sens_S_max) <- NULL
+sens_S_max <- add_column(.data = sens_S_max, 
+                         metric = c("max size", "max size", "max size"), 
+                         parameter = c("r", "g", "k"),
+                         .before = 1)
+
+sens_S_100 <- as.data.frame(sens_forest_100$S)
+row.names(sens_S_100) <- NULL
+sens_S_100 <- add_column(.data = sens_S_100, 
+                         metric = c("100 years", "100 years", "100 years"), 
+                         parameter = c("r", "g", "k"),
+                         .before = 1)
+
+sens_S<- rbind(sens_S_max, sens_S_100)
 
 
 ## put in nice tables
-sens_T %>% 
+sens_S %>% 
   kable(caption = "**Table 1.** First order sobol indices") %>% 
   kable_styling(full_width = FALSE,
                 bootstrap_options = "hover",
                 position = "left")
 
-sens_S %>% 
+sens_T %>% 
   kable(caption = "**Table 2.** Total sobol indices") %>% 
   kable_styling(full_width = FALSE,
                 bootstrap_options = "hover",
@@ -199,10 +228,7 @@ sens_S %>%
 ```
 
 
-
-
-
-
+As shown in Figure 2, the modeled maximum forest size over 300 years is more sensitive than the forest size after 100 years. For both the first order and total sobol indices (Tables 1 and 2, respectively), parameter r has the largest impact on forest size after 100 years. This is because r determines the pre-canopy closure growth rate, and the size of the forest usually does not pass the canopy closure threshold before 100 years (see Figure 1). When looking at the overall maximum forest size, parameters r and K almost equally affect the model output. These results indicate that after the canopy closure threshold is reached, the carrying capacity has a larger effect on modeled forest size than the post-closure growth rate (g). Additionally, it appears that the growth rate before reaching the threshold (r) has a larger effect on overall maximum forest size than g. 
 
 
 
