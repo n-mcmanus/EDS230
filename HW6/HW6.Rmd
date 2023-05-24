@@ -21,16 +21,15 @@ library(tidyverse)    ## always
 library(here)         ## stable file paths
 ```
 
-
 ## ODE solver w/o sensitivity
 
 First we'll run the model (using the ODE solver) to determine the forest size after 300 years and visualize the results. For this run, we'll make the following assumptions:
--   initial forest size (Cinnitial) of 10 kgC
+
+-   initial forest size (Cinitial) of 10 kgC
 -   canopy closure threshold (closure) of 50 kgC
 -   carrying capacity (K) of 250 kgC
 -   growth rate before canopy closure (r) of 0.01
 -   growth rate after canopy closure (g) of 2 kg/yr
-
 
 ```{r}
 ## read in function
@@ -58,7 +57,6 @@ colnames(result) = c("time", "C")
 result = as.data.frame(result)
 ```
 
-
 ```{r}
 ## Visualize results
 ggplot(result, aes(x = time, y = C)) + 
@@ -84,6 +82,7 @@ ggplot(result, aes(x = time, y = C)) +
 Now we'll perform a sensitivity analysis that explores how changes in three parameters -- r, g, and K -- change two metrics of interest: maximum forest size over the 300 years, and forest size after 100 years. When creating sample values for the parameters, we'll assume a normal distribution with standard deviation of 10%
 
 First, create a sample of parameter values using sobol.
+
 ```{r}
 ## all will have standard dev of 10%
 sd = 0.1
@@ -116,8 +115,8 @@ sens_c = sobolSalt(model = NULL, X1 = param1, X2 = param2, nboot = 300)
 colnames(sens_c$X) = c("r", "g", "k")
 ```
 
+Now we'll create a wrapper function so that we can use `map()` to run the ODE solver and find the metrics of interest for each set of parameters. The one parameter we are not changing is the canopy closure threshold, which remains at 50 kgC.
 
-Now we'll create a wrapper function so that we can use `map()` to run the ODE solver and find the metrics of interest for each set of parameters. The one parameter we are not changing is the canopy closure threshold, which remains at 50 kgC. 
 ```{r}
 ## create wrapper fxn to run ODE and return max forest size
 c_wrapper = function(r, g, k, closure, Cinitial, times, func) {
@@ -169,7 +168,7 @@ ggplot(data = allres_tidy, aes(x = metric, y = value, color = metric, fill = met
 
 ```
 
-**Figure 2.** Sensitivity analysis of maximum forest size (kg C) and forest size after 100 years. The forest growth model was run with varying growth rates before and after the canopy closure threshold as well as forest carrying capacity. The mean maximum forest size is `r round(mean(allres$c_max), 2)` kg C, while the mean forest size after 100 years is `r round(mean(allres$c_100),2)` kg C. 
+**Figure 2.** Sensitivity analysis of maximum forest size (kg C) and forest size after 100 years. The forest growth model was run with varying growth rates before and after the canopy closure threshold as well as forest carrying capacity. The mean maximum forest size is `r round(mean(allres$c_max), 2)` kg C, while the mean forest size after 100 years is `r round(mean(allres$c_100),2)` kg C.
 
 ```{r}
 ## sobol indices
@@ -227,12 +226,4 @@ sens_T %>%
                 position = "left")
 ```
 
-
-As shown in Figure 2, the modeled maximum forest size over 300 years is more sensitive than the forest size after 100 years. For both the first order and total sobol indices (Tables 1 and 2, respectively), parameter r has the largest impact on forest size after 100 years. This is because r determines the pre-canopy closure growth rate, and the size of the forest usually does not pass the canopy closure threshold before 100 years (see Figure 1). When looking at the overall maximum forest size, parameters r and K almost equally affect the model output. These results indicate that after the canopy closure threshold is reached, the carrying capacity has a larger effect on modeled forest size than the post-closure growth rate (g). Additionally, it appears that the growth rate before reaching the threshold (r) has a larger effect on overall maximum forest size than g. 
-
-
-
-
-
-
-
+As shown in Figure 2, the modeled maximum forest size over 300 years is more sensitive than the forest size after 100 years. For both the first order and total sobol indices (Tables 1 and 2, respectively), parameter r has the largest impact on forest size after 100 years. This is because r determines the pre-canopy closure growth rate, and the size of the forest usually does not pass the canopy closure threshold before 100 years (see Figure 1). When looking at the overall maximum forest size, parameters r and K almost equally affect the model output. These results indicate that after the canopy closure threshold is reached, the carrying capacity has a larger effect on modeled forest size than the post-closure growth rate (g). Additionally, it appears that the growth rate before reaching the threshold (r) has a larger effect on overall maximum forest size than g.
